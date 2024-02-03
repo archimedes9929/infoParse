@@ -1,9 +1,7 @@
 import streamlit as st
 import tabula
 import pandas as pd
-import os, sys
-import tempfile
-from io import BytesIO
+import os
 
 FILEPATH = os.path.realpath(__file__)
 FILEDIR  = os.path.dirname(FILEPATH)
@@ -15,7 +13,7 @@ st.title("Tabular PDF to XLSX conversion")
 to_convert = st.file_uploader("Upload a PDF file with tables", type="pdf")
 
 @st.cache_data
-def to_xlsx_bytes(df:pd.DataFrame, output_path:str) -> bytes:
+def to_xlsx_bytes(out_df:pd.DataFrame, output_path:str) -> bytes:
     out_df.to_excel(output_path, index=False)
     with open(output_path, "rb") as template_file:
         xl_bytes = template_file.read()
@@ -27,14 +25,15 @@ if to_convert is not None:
     # Define the full path to the file
 
     file_path = os.path.join(inputs_dir, file_name)
-     # Save the file
+    # Save the file
     with open(file_path, 'wb') as f:
         f.write(to_convert.getvalue())
 
     st.write("File successfully uploaded. Locally stored")
 
     # Grab from local
-    pages = tabula.read_pdf(file_path, pages="all")
+    pages = tabula.read_pdf(file_path, pages="all", encoding="cp1252")
+    
     for page in pages[1:]: page.columns = pages[0].columns
     out_df:pd.DataFrame = pd.concat(pages)
 
